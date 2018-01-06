@@ -1,9 +1,6 @@
 # Vehicle Detection
 [![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
 
-
-# **Vehicle Detection Project**
-
 The goals / steps of this project are the following:
 
 * Perform deep learning based detection algorithm to detect the cars on the road.
@@ -54,17 +51,24 @@ Prediction from the model
 
 #### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
-I saved the last 30 predictions data and used `cv2.groupRectangles()` to combine the bounding boxes predicted by the mdoel. On trial and error basis the parameters for the function is defined [here]().
+I saved the last 30 predictions data and used `cv2.groupRectangles()` to combine the bounding boxes predicted by the mdoel. On trial and error basis the parameters for the function is defined [here](https://github.com/ShankHarinath/CarND-Vehicle-Detection/blob/master/detection_pipeline.py#L129).
 
 #### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
 * Detected boxes
+
 ![Detected boxes](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/Boxes.png)
+
 * `scipy.ndimage.measurements.label()` output
+
 ![GreyMap](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/GreyMap.png)
+
 * Heat map
+
 ![Heat Map](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/HeatMap.png)
+
 * Car Positions
+
 ![Heat & bounding boxes](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/Car%20Positions.png)
 
 ---
@@ -85,3 +89,4 @@ The neural network model fails to detect cars when it on the side as the dataset
 
 ##### Enhancement:
 * Can use `ImageDataGenerator` to augment images for brightness, rotation and sheer angle the images to get a better performance.
+
