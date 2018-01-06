@@ -50,17 +50,24 @@ Prediction from the model
 
 #### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
-I saved the last 30 predictions data and used `cv2.groupRectangles()` to combine the bounding boxes predicted by the mdoel. On trial and error basis the parameters for the function is defined [here]().
+I saved the last 30 predictions data and used `cv2.groupRectangles()` to combine the bounding boxes predicted by the mdoel. On trial and error basis the parameters for the function is defined [here](https://github.com/ShankHarinath/CarND-Vehicle-Detection/blob/master/detection_pipeline.py#L129).
 
 #### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
 * Detected boxes
+
 ![Detected boxes](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/Boxes.png)
+
 * `scipy.ndimage.measurements.label()` output
+
 ![GreyMap](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/GreyMap.png)
+
 * Heat map
+
 ![Heat Map](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/HeatMap.png)
+
 * Car Positions
+
 ![Heat & bounding boxes](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/Car%20Positions.png)
 
 ---
