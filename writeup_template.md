@@ -1,85 +1,73 @@
-## Writeup Template
-### You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
-
----
-
-**Vehicle Detection Project**
+# **Vehicle Detection Project**
 
 The goals / steps of this project are the following:
 
-* Perform a Histogram of Oriented Gradients (HOG) feature extraction on a labeled training set of images and train a classifier Linear SVM classifier
-* Optionally, you can also apply a color transform and append binned color features, as well as histograms of color, to your HOG feature vector. 
-* Note: for those first two steps don't forget to normalize your features and randomize a selection for training and testing.
+* Perform deep learning based detection algorithm to detect the cars on the road.
 * Implement a sliding-window technique and use your trained classifier to search for vehicles in images.
 * Run your pipeline on a video stream (start with the test_video.mp4 and later implement on full project_video.mp4) and create a heat map of recurring detections frame by frame to reject outliers and follow detected vehicles.
 * Estimate a bounding box for vehicles detected.
-
-[//]: # (Image References)
-[image1]: ./examples/car_not_car.png
-[image2]: ./examples/HOG_example.jpg
-[image3]: ./examples/sliding_windows.jpg
-[image4]: ./examples/sliding_window.jpg
-[image5]: ./examples/bboxes_and_heat.png
-[image6]: ./examples/labels_map.png
-[image7]: ./examples/output_bboxes.png
-[video1]: ./project_video.mp4
-
-## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
-### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
-
+* 
 ---
-### Writeup / README
+### Neural network based cars detection algorithm
 
-#### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  [Here](https://github.com/udacity/CarND-Vehicle-Detection/blob/master/writeup_template.md) is a template writeup for this project you can use as a guide and a starting point.  
+#### 1. Training images.
 
-You're reading it!
+I started by reading in all the `vehicle` and `non-vehicle` images.
 
-### Histogram of Oriented Gradients (HOG)
+This wasn't enough as all of the car images were taken from the back and the model did not do well to detect the car untill the back was visible. So I augmented data from test video and generate more data of cars from the side along with thier back pictures.
 
-#### 1. Explain how (and identify where in your code) you extracted HOG features from the training images.
+#### 2. Explain how you you trained a classifier and settled on the current model.
 
-The code for this step is contained in the first code cell of the IPython notebook (or in lines # through # of the file called `some_file.py`).  
+Motivation for using neural network based solution was from [Max Ritter](https://github.com/maxritter/SDC-Vehicle-Lane-Detection), who has used neural work based solution for this project.
 
-I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
+I started off with: 
+* Scaled down version of YOLO
+    - Using pretrained model and train the final layers on the current dataset. It did reasonably well, but was very slow.
+* Tiny YOLO
+    - Using pretrained weights but train the final layers again on the dataset.
+    - Using pretrained weights.
+    - Both did approximately similar to YOLO, still time consuming.
+* Current model ([here](https://github.com/ShankHarinath/CarND-Vehicle-Detection/blob/master/model.py#L41)) similar to [Max Ritter](https://github.com/maxritter/SDC-Vehicle-Lane-Detection).
+    - I tried different variants of it, added more layers (dropout, batch normalization), the barebone model seemed to work the best with some changes to the final layers.
 
-![alt text][image1]
+I trainined the current model with the below network configuration and input dimension of (64, 64, 3) to create a binary classifier.
 
-I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
+![TrainedModel](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/TrainedModel.png)
 
-Here is an example using the `YCrCb` color space and HOG parameters of `orientations=8`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
+I used the weights of this trained model and scaled the inputs to (260, 880, 3).
+The models output is of size (None, 25, 103, 1), the 25*103 is the map of different regions on the image with bianry classification. This will tell us the hot area/possibility of finding a car. Detection model looks as below:
 
+![FinalModel](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/FinalModel.png)
 
-![alt text][image2]
+Rescaled and cropped image from the video is then fed into the model to get the predictions.
 
-#### 2. Explain how you settled on your final choice of HOG parameters.
+![CroppedImage](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/Cropped.png)
 
-I tried various combinations of parameters and...
+Prediction from the model
 
-#### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
-
-I trained a linear SVM using...
+![CroppedImage](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/Prediction.png)
 
 ### Sliding Window Search
 
 #### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
-I decided to search random window positions at random scales all over the image and came up with this (ok just kidding I didn't actually ;):
-
-![alt text][image3]
+I saved the last 30 predictions data and used `cv2.groupRectangles()` to combine the bounding boxes predicted by the mdoel. On trial and error basis the parameters for the function is defined [here]().
 
 #### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
-Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
+* Detected boxes
+![Detected boxes](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/Boxes.png)
+* `scipy.ndimage.measurements.label()` output
+![GreyMap](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/GreyMap.png)
+* Heat map and bounding boxes
+![Heat & bounding boxes](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/Intermediate.png)
 
-![alt text][image4]
 ---
 
 ### Video Implementation
 
 #### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
 Here's a [link to my video result](./project_video.mp4)
-
-
 #### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
 I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
