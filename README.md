@@ -2,36 +2,86 @@
 [![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
 
 
-In this project, your goal is to write a software pipeline to detect vehicles in a video (start with the test_video.mp4 and later implement on full project_video.mp4), but the main output or product we want you to create is a detailed writeup of the project.  Check out the [writeup template](https://github.com/udacity/CarND-Vehicle-Detection/blob/master/writeup_template.md) for this project and use it as a starting point for creating your own writeup.  
-
-Creating a great writeup:
----
-A great writeup should include the rubric points as well as your description of how you addressed each point.  You should include a detailed description of the code used in each step (with line-number references and code snippets where necessary), and links to other supporting documents or external references.  You should include images in your writeup to demonstrate how your code works with examples.  
-
-All that said, please be concise!  We're not looking for you to write a book here, just a brief description of how you passed each rubric point, and references to the relevant code :). 
-
-You can submit your writeup in markdown or use another method and submit a pdf instead.
-
-The Project
----
+# **Vehicle Detection Project**
 
 The goals / steps of this project are the following:
 
-* Perform a Histogram of Oriented Gradients (HOG) feature extraction on a labeled training set of images and train a classifier Linear SVM classifier
-* Optionally, you can also apply a color transform and append binned color features, as well as histograms of color, to your HOG feature vector. 
-* Note: for those first two steps don't forget to normalize your features and randomize a selection for training and testing.
+* Perform deep learning based detection algorithm to detect the cars on the road.
 * Implement a sliding-window technique and use your trained classifier to search for vehicles in images.
 * Run your pipeline on a video stream (start with the test_video.mp4 and later implement on full project_video.mp4) and create a heat map of recurring detections frame by frame to reject outliers and follow detected vehicles.
 * Estimate a bounding box for vehicles detected.
+---
+### Neural network based cars detection algorithm
 
-Here are links to the labeled data for [vehicle](https://s3.amazonaws.com/udacity-sdc/Vehicle_Tracking/vehicles.zip) and [non-vehicle](https://s3.amazonaws.com/udacity-sdc/Vehicle_Tracking/non-vehicles.zip) examples to train your classifier.  These example images come from a combination of the [GTI vehicle image database](http://www.gti.ssr.upm.es/data/Vehicle_database.html), the [KITTI vision benchmark suite](http://www.cvlibs.net/datasets/kitti/), and examples extracted from the project video itself.   You are welcome and encouraged to take advantage of the recently released [Udacity labeled dataset](https://github.com/udacity/self-driving-car/tree/master/annotations) to augment your training data.  
+#### 1. Training images.
 
-Some example images for testing your pipeline on single frames are located in the `test_images` folder.  To help the reviewer examine your work, please save examples of the output from each stage of your pipeline in the folder called `ouput_images`, and include them in your writeup for the project by describing what each image shows.    The video called `project_video.mp4` is the video your pipeline should work well on.  
+I started by reading in all the `vehicle` and `non-vehicle` images.
 
-**As an optional challenge** Once you have a working pipeline for vehicle detection, add in your lane-finding algorithm from the last project to do simultaneous lane-finding and vehicle detection!
+This wasn't enough as all of the car images were taken from the back and the model did not do well to detect the car untill the back was visible. So I augmented data from test video and generate more data of cars from the side along with thier back pictures.
 
-**If you're feeling ambitious** (also totally optional though), don't stop there!  We encourage you to go out and take video of your own, and show us how you would implement this project on a new video!
+#### 2. Explain how you you trained a classifier and settled on the current model.
 
-## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
+Motivation for using neural network based solution was from [Max Ritter](https://github.com/maxritter/SDC-Vehicle-Lane-Detection), who has used neural work based solution for this project.
 
+I started off with: 
+* Scaled down version of YOLO
+    - Using pretrained model and train the final layers on the current dataset. It did reasonably well, but was very slow.
+* Tiny YOLO
+    - Using pretrained weights but train the final layers again on the dataset.
+    - Using pretrained weights.
+    - Both did approximately similar to YOLO, still time consuming.
+* Current model ([here](https://github.com/ShankHarinath/CarND-Vehicle-Detection/blob/master/model.py#L41)) similar to [Max Ritter](https://github.com/maxritter/SDC-Vehicle-Lane-Detection).
+    - I tried different variants of it, added more layers (dropout, batch normalization), the barebone model seemed to work the best with some changes to the final layers.
+
+I trainined the current model with the below network configuration and input dimension of (64, 64, 3) to create a binary classifier.
+
+![TrainedModel](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/TrainedModel.png)
+
+I used the weights of this trained model and scaled the inputs to (260, 880, 3).
+The models output is of size (None, 25, 103, 1), the 25*103 is the map of different regions on the image with bianry classification. This will tell us the hot area/possibility of finding a car. Detection model looks as below:
+
+![FinalModel](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/FinalModel.png)
+
+Rescaled and cropped image from the video is then fed into the model to get the predictions.
+
+![CroppedImage](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/Cropped.png)
+
+Prediction from the model
+
+![PredictedImage](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/Prediction.png)
+
+### Sliding Window Search
+
+#### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
+
+I saved the last 30 predictions data and used `cv2.groupRectangles()` to combine the bounding boxes predicted by the mdoel. On trial and error basis the parameters for the function is defined [here]().
+
+#### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
+
+* Detected boxes
+![Detected boxes](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/Boxes.png)
+* `scipy.ndimage.measurements.label()` output
+![GreyMap](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/GreyMap.png)
+* Heat map
+![Heat Map](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/HeatMap.png)
+* Car Positions
+![Heat & bounding boxes](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/output_images/Car%20Positions.png)
+
+---
+
+### Video Implementation
+
+#### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
+
+Here's a [link to my video result](https://github.com/ShankHarinath/CarND-Vehicle-Detection/raw/master/project_video_result.mp4)
+
+---
+
+### Discussion
+
+#### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
+
+The neural network model fails to detect cars when it on the side as the dataset doesn't have too many images of cars from their side. I tried augmenting the data but it still can perform better with more images of different cars.
+
+##### Enhancement:
+* Can use `ImageDataGenerator` to augment images for brightness, rotation and sheer angle the images to get a better performance.
